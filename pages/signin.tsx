@@ -44,8 +44,6 @@ export default function SignInPage() {
       email,
       callbackUrl: "/",
     });
-
-    setLoading(false);
   };
 
   if (loading || status === "loading") {
