@@ -1,8 +1,8 @@
 import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 import { useAuthsignal } from "../utils/authsignal";
-import { useRouter } from "next/router";
 
 export default function SignInPage() {
   const { status } = useSession();
