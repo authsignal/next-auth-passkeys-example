@@ -1,5 +1,6 @@
 import { Authsignal } from "@authsignal/node";
 import { NextApiRequest, NextApiResponse } from "next";
+import { getToken } from "next-auth/jwt"
 
 const authsignal = new Authsignal({
   secret: process.env.AUTHSIGNAL_TENANT_SECRET!,
@@ -7,15 +8,16 @@ const authsignal = new Authsignal({
 });
 
 export default async function enrollPasskey(req: NextApiRequest, res: NextApiResponse) {
-  const { userId } = req.query;
+  const sessionToken = await getToken({ req })
 
-  if (!userId || Array.isArray(userId)) {
-    res.status(400).json("Invalid userId");
-    return;
+  if (!sessionToken || !sessionToken.email) {
+    return res.status(401).send('Unauthenticated');
   }
 
+  const {email} = sessionToken
+
   const { token } = await authsignal.track({
-    userId,
+    userId: email,
     action: "enroll-passkey",
   });
 

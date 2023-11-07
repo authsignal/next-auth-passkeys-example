@@ -24,7 +24,7 @@ export default function Index() {
 
     // Get a short lived token by tracking an action
     const enrollPasskeyResponse = await fetch(
-      `/api/auth/enroll-passkey/?userId=${session.user.email}`
+      "/api/auth/enroll-passkey"
     );
 
     const token = await enrollPasskeyResponse.json();
