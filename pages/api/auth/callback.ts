@@ -11,7 +11,7 @@ export default async function callback(req: NextApiRequest, res: NextApiResponse
   const sessionToken = await getToken({ req })
 
   if (!sessionToken) {
-    return res.status(401).send('Unauthenticated');
+    return res.status(401).json('Unauthenticated');
   }
 
   const { token } = req.query;
