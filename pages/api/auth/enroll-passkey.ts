@@ -14,10 +14,8 @@ export default async function enrollPasskey(req: NextApiRequest, res: NextApiRes
     return res.status(401).send('Unauthenticated');
   }
 
-  const {email} = sessionToken
-
   const { token } = await authsignal.track({
-    userId: email,
+    userId: sessionToken.email,
     action: "enroll-passkey",
   });
 
