@@ -1,10 +1,12 @@
 import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 import { useAuthsignal } from "../utils/authsignal";
 
 export default function SignInPage() {
   const { status } = useSession();
+  const router = useRouter()
 
   const authsignal = useAuthsignal();
 
@@ -21,17 +23,23 @@ export default function SignInPage() {
       // Run NextAuth's sign in flow. This will run if the user selects one of their passkeys
       // from the Webauthn dropdown.
       if (signInToken) {
-        await signIn("credentials", {
+        const result = await signIn("credentials", {
           signInToken,  
-          callbackUrl: "/",
+          redirect: false,
         });
+
+        if (result?.error) {
+          alert("Failed to sign in with passkey")
+        }
+
+        router.push("/")
       }
     };
 
     if (status === "unauthenticated") {
       handlePasskeySignIn();
     }
-  }, [status, authsignal.passkey]);
+  }, [status, authsignal.passkey, router]);
 
   const handleSubmit = async () => {
     if (!email) {
