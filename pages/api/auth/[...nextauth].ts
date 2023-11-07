@@ -12,7 +12,7 @@ const authsignal = new Authsignal({
 
 const prisma = new PrismaClient();
 
-export const authOptions = {
+const authOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt" as SessionStrategy,
