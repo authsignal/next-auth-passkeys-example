@@ -6,7 +6,7 @@ import { useAuthsignal } from "../utils/authsignal";
 
 export default function SignInPage() {
   const { status } = useSession();
-  const router = useRouter()
+  const router = useRouter();
 
   const authsignal = useAuthsignal();
 
@@ -15,24 +15,32 @@ export default function SignInPage() {
 
   useEffect(() => {
     const handlePasskeySignIn = async () => {
-      // Initialize the input for passkey autofill
-      const signInToken = await authsignal.passkey.signIn({
-        autofill: true,
-      });
-
-      // Run NextAuth's sign in flow. This will run if the user selects one of their passkeys
-      // from the Webauthn dropdown.
-      if (signInToken) {
-        const result = await signIn("credentials", {
-          signInToken,  
-          redirect: false,
+      try {
+        // Initialize the input for passkey autofill
+        const signInToken = await authsignal.passkey.signIn({
+          autofill: true,
         });
 
-        if (result?.error) {
-          alert("Failed to sign in with passkey")
-        }
+        // Run NextAuth's sign in flow. This will run if the user selects one of their passkeys
+        // from the Webauthn dropdown.
+        if (signInToken) {
+          const result = await signIn("credentials", {
+            signInToken,
+            redirect: false,
+          });
 
-        router.push("/")
+          if (result?.error) {
+            alert("Failed to sign in with passkey");
+          }
+
+          router.push("/");
+        }
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          // Ignore
+        } else {
+          throw err;
+        }
       }
     };
 
