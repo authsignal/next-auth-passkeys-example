@@ -13,12 +13,12 @@ export default async function enrollPasskey(
 ) {
   const sessionToken = await getToken({ req });
 
-  if (!sessionToken || !sessionToken.email) {
+  if (!sessionToken || !sessionToken.sub) {
     return res.status(401).json("Unauthenticated");
   }
 
   const { token } = await authsignal.track({
-    userId: sessionToken.email,
+    userId: sessionToken.sub,
     action: "enroll-passkey",
     scope: "add:authenticators",
   });
