@@ -6,7 +6,10 @@ const authsignal = new Authsignal({
   apiBaseUrl: process.env.NEXT_PUBLIC_AUTHSIGNAL_BASE_URL,
 });
 
-export default async function enrollPasskey(req: NextApiRequest, res: NextApiResponse) {
+export default async function enrollPasskey(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const { userId } = req.query;
 
   if (!userId || Array.isArray(userId)) {
@@ -17,7 +20,8 @@ export default async function enrollPasskey(req: NextApiRequest, res: NextApiRes
   const { token } = await authsignal.track({
     userId,
     action: "enroll-passkey",
+    scope: "add:authenticators",
   });
 
   res.status(200).json(token);
-};
+}
