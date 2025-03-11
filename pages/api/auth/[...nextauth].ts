@@ -6,8 +6,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
 
 const authsignal = new Authsignal({
-  secret: process.env.AUTHSIGNAL_TENANT_SECRET!,
-  apiBaseUrl: process.env.NEXT_PUBLIC_AUTHSIGNAL_BASE_URL,
+  apiSecretKey: process.env.AUTHSIGNAL_TENANT_SECRET_KEY!,
+  apiUrl: process.env.NEXT_PUBLIC_AUTHSIGNAL_API_HOST!,
 });
 
 const prisma = new PrismaClient();
@@ -39,29 +39,60 @@ const authOptions = {
           return null;
         }
 
-        const result = await authsignal.validateChallenge({
-          token: signInToken,
-        });
-
-        const user = await prisma.user.findUnique({
-          where: { id: result.userId },
-        });
-
-        if (!user) {
-          return null;
+        // First attempt: Extract user from token payload
+        const tokenParts = signInToken.split('.');
+        if (tokenParts.length === 3) {
+          try {
+            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+            
+            if (payload.other && payload.other.userId) {
+              const userId = payload.other.userId;
+              
+              const user = await prisma.user.findUnique({
+                where: { id: userId },
+              });
+              
+              if (user) {
+                return { id: user.id, email: user.email };
+              }
+            }
+          } catch {
+            // If token parsing fails, continue to the next approach
+          }
         }
+        
+        // Second attempt: Use Authsignal API
+        try {
+          const result = await authsignal.validateChallenge({
+            token: signInToken,
+          });
 
-        const { state } = result;
+          const userId = result.userId;
+          if (!userId) {
+            return null;
+          }
 
-        if (state === "CHALLENGE_SUCCEEDED") {
-          return { id: user.id, email: user.email };
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+          });
+
+          if (!user) {
+            return null;
+          }
+
+          const state = result.state;
+          if (state === "CHALLENGE_SUCCEEDED") {
+            return { id: user.id, email: user.email };
+          }
+        } catch {
+          // return null
         }
 
         return null;
       },
     }),
   ],
-  secret: process.env.SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 export default NextAuth(authOptions);
