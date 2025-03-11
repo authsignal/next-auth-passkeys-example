@@ -39,29 +39,7 @@ const authOptions = {
           return null;
         }
 
-        // First attempt: Extract user from token payload
-        const tokenParts = signInToken.split('.');
-        if (tokenParts.length === 3) {
-          try {
-            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-            
-            if (payload.other && payload.other.userId) {
-              const userId = payload.other.userId;
-              
-              const user = await prisma.user.findUnique({
-                where: { id: userId },
-              });
-              
-              if (user) {
-                return { id: user.id, email: user.email };
-              }
-            }
-          } catch {
-            // If token parsing fails, continue to the next approach
-          }
-        }
-        
-        // Second attempt: Use Authsignal API
+        // Use Authsignal API for validation
         try {
           const result = await authsignal.validateChallenge({
             token: signInToken,
@@ -84,7 +62,8 @@ const authOptions = {
           if (state === "CHALLENGE_SUCCEEDED") {
             return { id: user.id, email: user.email };
           }
-        } catch {
+        } catch (error) {
+          console.error("Authsignal validation error:", error);
           // return null
         }
 
