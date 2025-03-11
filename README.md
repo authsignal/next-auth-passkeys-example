@@ -11,7 +11,7 @@ This example shows how to integrate passkeys into a Next.js application using Au
 
 ## Introduction
 
-AuthSignal is a step-up authentication platform that seamlessly adds passkeys and MFA anywhere in your application, providing enhanced security exactly when you need it.
+Authsignal is a step-up authentication platform that seamlessly adds passkeys and MFA anywhere in your application, providing enhanced security exactly when you need it.
 
 ## Deploy
 
