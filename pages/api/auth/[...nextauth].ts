@@ -6,8 +6,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
 
 const authsignal = new Authsignal({
-  secret: process.env.AUTHSIGNAL_TENANT_SECRET!,
-  apiBaseUrl: process.env.NEXT_PUBLIC_AUTHSIGNAL_BASE_URL,
+  apiSecretKey: process.env.AUTHSIGNAL_TENANT_SECRET_KEY!,
+  apiUrl: process.env.NEXT_PUBLIC_AUTHSIGNAL_API_HOST!,
 });
 
 const prisma = new PrismaClient();
@@ -39,29 +39,39 @@ const authOptions = {
           return null;
         }
 
-        const result = await authsignal.validateChallenge({
-          token: signInToken,
-        });
+        // Use Authsignal API for validation
+        try {
+          const result = await authsignal.validateChallenge({
+            token: signInToken,
+          });
 
-        const user = await prisma.user.findUnique({
-          where: { id: result.userId },
-        });
+          const userId = result.userId;
+          if (!userId) {
+            return null;
+          }
 
-        if (!user) {
-          return null;
-        }
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+          });
 
-        const { state } = result;
+          if (!user) {
+            return null;
+          }
 
-        if (state === "CHALLENGE_SUCCEEDED") {
-          return { id: user.id, email: user.email };
+          const state = result.state;
+          if (state === "CHALLENGE_SUCCEEDED") {
+            return { id: user.id, email: user.email };
+          }
+        } catch (error) {
+          console.error("Authsignal validation error:", error);
+          // return null
         }
 
         return null;
       },
     }),
   ],
-  secret: process.env.SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 export default NextAuth(authOptions);

@@ -30,11 +30,11 @@ export default function Index() {
     const token = await enrollPasskeyResponse.json();
 
     // Initiate the passkey enroll flow
-    const userName = session.user.email;
+    const username = session.user.email;
 
     const resultToken = await authsignal.passkey.signUp({
       token,
-      userName,
+      username,
     });
 
     // Check that the enrollment was successful

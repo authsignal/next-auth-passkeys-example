@@ -17,13 +17,20 @@ export default function SignInPage() {
     const handlePasskeySignIn = async () => {
       try {
         // Initialize the input for passkey autofill
-        const signInToken = await authsignal.passkey.signIn({
+        const response = await authsignal.passkey.signIn({
           autofill: true,
         });
+        
+        // Extract token from response.data.token
+        let signInToken = null;
+        
+        if (response && response.data && response.data.token) {
+          signInToken = response.data.token;
+        }
 
-        // Run NextAuth's sign in flow. This will run if the user selects one of their passkeys
-        // from the Webauthn dropdown.
-        if (signInToken) {
+        // Run NextAuth's sign in flow. This will run if the user selects one of their passkeys from the Webauthn dropdown.
+        if (signInToken && typeof signInToken === 'string') {
+          console.log("Calling NextAuth signIn with token");
           const result = await signIn("credentials", {
             signInToken,
             redirect: false,
@@ -31,14 +38,18 @@ export default function SignInPage() {
 
           if (result?.error) {
             alert("Failed to sign in with passkey");
+          } else {
+            router.push("/");
           }
-
-          router.push("/");
+        } else {
+          alert("Failed to sign in with passkey: Invalid token format");
         }
       } catch (err: any) {
         if (err.name === "AbortError") {
+          console.log("Passkey sign-in aborted");
           // Ignore
         } else {
+          console.error("Passkey sign-in error:", err);
           throw err;
         }
       }

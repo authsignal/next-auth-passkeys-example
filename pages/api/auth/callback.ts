@@ -3,8 +3,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getToken } from "next-auth/jwt";
 
 const authsignal = new Authsignal({
-  secret: process.env.AUTHSIGNAL_TENANT_SECRET!,
-  apiBaseUrl: process.env.NEXT_PUBLIC_AUTHSIGNAL_BASE_URL,
+  apiSecretKey: process.env.AUTHSIGNAL_TENANT_SECRET_KEY!,
+  apiUrl: process.env.NEXT_PUBLIC_AUTHSIGNAL_API_HOST!,
 });
 
 export default async function callback(req: NextApiRequest, res: NextApiResponse) {
