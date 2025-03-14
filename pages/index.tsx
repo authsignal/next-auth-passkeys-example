@@ -1,14 +1,22 @@
 import { useRouter } from "next/router";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect } from "react";
-
 import { useAuthsignal } from "../utils/authsignal";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Loader2, LogOut, Key, Shield } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function Index() {
   const { data: session, status } = useSession();
-
   const router = useRouter();
-
   const authsignal = useAuthsignal();
 
   useEffect(() => {
@@ -22,47 +30,102 @@ export default function Index() {
       throw new Error("No user in session");
     }
 
-    // Get a short lived token by tracking an action
-    const enrollPasskeyResponse = await fetch(
-      "/api/auth/enroll-passkey"
-    );
+    try {
+      // Get a short lived token by tracking an action
+      const enrollPasskeyResponse = await fetch("/api/auth/enroll-passkey");
+      const token = await enrollPasskeyResponse.json();
 
-    const token = await enrollPasskeyResponse.json();
+      // Initiate the passkey enroll flow
+      const username = session.user.email;
+      const resultToken = await authsignal.passkey.signUp({
+        token,
+        username,
+      });
 
-    // Initiate the passkey enroll flow
-    const username = session.user.email;
+      // Check that the enrollment was successful
+      const callbackResponse = await fetch(
+        `/api/auth/callback/?token=${resultToken}`
+      );
+      const { success } = await callbackResponse.json();
 
-    const resultToken = await authsignal.passkey.signUp({
-      token,
-      username,
-    });
-
-    // Check that the enrollment was successful
-    const callbackResponse = await fetch(
-      `/api/auth/callback/?token=${resultToken}`
-    );
-
-    const { success } = await callbackResponse.json();
-
-    if (success) {
-      alert("Successfully added passkey");
-    } else {
+      if (success) {
+        alert("Successfully added passkey");
+      } else {
+        alert("Failed to add passkey");
+      }
+    } catch (error) {
+      console.error("Error enrolling passkey:", error);
       alert("Failed to add passkey");
     }
   };
 
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading your account...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container">
-      <h3>Welcome, {session?.user?.email}</h3>
-      <p>You now have a NextAuth session.</p>
-      <button onClick={() => signOut({ callbackUrl: "/signin" })}>
-        Sign out
-      </button>
-      <button onClick={enrollPasskey}>Create passkey</button>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-3">
+          <CardTitle className="text-2xl font-bold text-center">
+            Welcome back
+          </CardTitle>
+          <CardDescription className="text-center break-all">
+            Signed in as {session?.user?.email}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          <div className="rounded-lg border bg-card p-4">
+            <div className="flex items-center space-x-4">
+              <Shield className="h-6 w-6 text-primary" />
+              <div>
+                <h4 className="text-sm font-semibold">Account Security</h4>
+                <p className="text-sm text-muted-foreground">
+                  Enhance your account security by adding a passkey
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={enrollPasskey}
+              size="lg"
+            >
+              <Key className="mr-2 h-4 w-4" />
+              Create Passkey
+            </Button>
+
+            <Separator className="my-4" />
+
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => signOut({ callbackUrl: "/signin" })}
+              size="lg"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            Secured by Authsignal
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
