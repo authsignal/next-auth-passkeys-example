@@ -21,7 +21,17 @@ export default async function callback(req: NextApiRequest, res: NextApiResponse
     return;
   }
 
-  const data = await authsignal.validateChallenge({ token });
+  try {
+    const data = await authsignal.validateChallenge({ token });
+    console.log('Validate challenge response:', data); // Debug log
 
-  res.status(200).json(data);
-};
+    res.status(200).json({
+      state: data.state,
+      userId: data.userId,
+      success: data.state === "CHALLENGE_SUCCEEDED"
+    });
+  } catch (error) {
+    console.error('Validate challenge error:', error);
+    res.status(500).json({ error: 'Failed to validate challenge', state: 'ERROR' });
+  }
+}

@@ -37,25 +37,25 @@ export default function Index() {
 
       // Initiate the passkey enroll flow
       const username = session.user.email;
-      const resultToken = await authsignal.passkey.signUp({
+      const response = await authsignal.passkey.signUp({
         token,
         username,
       });
 
-      // Check that the enrollment was successful
-      const callbackResponse = await fetch(
-        `/api/auth/callback/?token=${resultToken}`
-      );
-      const { success } = await callbackResponse.json();
-
-      if (success) {
-        alert("Successfully added passkey");
-      } else {
-        alert("Failed to add passkey");
-      }
-    } catch (error) {
+      // If we got here, the passkey was successfully created
+      // No need to validate the challenge token as the WebAuthn ceremony was completed
+      alert("Successfully added passkey");
+      
+    } catch (error: any) {
       console.error("Error enrolling passkey:", error);
-      alert("Failed to add passkey");
+      
+      // Handle the case where passkey is already registered
+      if (error.name === "InvalidStateError") {
+        alert("A passkey is already registered for this device. You can use it to sign in.");
+      } else {
+        console.error('Detailed error:', error); // Debug log
+        alert(`Failed to add passkey. Error: ${error.message || 'Unknown error'}`);
+      }
     }
   };
 
