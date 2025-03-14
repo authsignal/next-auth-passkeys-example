@@ -3,7 +3,6 @@
 </div>
 
 </br>
-</br>
 
 # Passkeys in a Next.js App with Authsignal and NextAuth
 
